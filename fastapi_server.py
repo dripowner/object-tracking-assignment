@@ -3,10 +3,12 @@ from track_3 import track_data, country_balls_amount
 import asyncio
 import glob
 import uvicorn
+from trackers import HungarianTracker
 
 app = FastAPI(title='Tracker assignment')
 imgs = glob.glob('imgs/*')
 country_balls = [{'cb_id': x, 'img': imgs[x % len(imgs)]} for x in range(country_balls_amount)]
+soft_tracker = HungarianTracker(iou_threshold=0.999)
 print('Started')
 
 
@@ -25,6 +27,20 @@ def tracker_soft(el):
     вашего трекера, использовать его в алгоритме трекера запрещено
     - запрещается присваивать один и тот же track_id разным объектам на одном фрейме
     """
+    data = el["data"]
+    bboxes = []
+    for obj in data:
+        if len(obj["bounding_box"]) != 0:
+            bboxes.append(obj["bounding_box"])
+    track_ids = soft_tracker.track(bboxes)
+    track_ids_counter = 0
+    for obj in data:
+        if len(obj["bounding_box"]) != 0:
+            obj["track_id"] = track_ids[track_ids_counter]
+            track_ids_counter += 1
+        else:
+            obj["track_id"] = "?"
+    el["data"] = data
     return el
 
 
