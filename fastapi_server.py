@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket
 from track_3 import track_data, country_balls_amount
 import asyncio
 import glob
+import uvicorn
 
 app = FastAPI(title='Tracker assignment')
 imgs = glob.glob('imgs/*')
@@ -66,3 +67,6 @@ async def websocket_endpoint(websocket: WebSocket):
         # отправка информации по фрейму
         await websocket.send_json(el)
     print('Bye..')
+
+if __name__ == "__main__":
+    uvicorn.run("fastapi_server:app", host="0.0.0.0", port=8080, reload=True)
