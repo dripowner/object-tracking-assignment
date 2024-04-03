@@ -4,7 +4,7 @@ from typing import List
 
 def IoU(bbox1, bbox2) -> float:
     if bbox1 is None or bbox2 is None:
-        return 0
+        return 1
     # Coordinates of the intersection rectangle
     x1 = max(bbox1[0], bbox2[0])
     y1 = max(bbox1[1], bbox2[1])
@@ -46,7 +46,7 @@ class HungarianTracker():
                 for _ in range(len(bbox_list) - len(self.tracks_ids_dict.keys())):
                     self.tracks_ids_dict[max(self.tracks_ids_dict)+1]={"bbox": None}
             
-            
+            # matrix to store IOU between each pair of dets and every track's last det
             cost_matrix = np.zeros((len(self.tracks_ids_dict.keys()), len(bbox_list)))
             
             for track_id in list(self.tracks_ids_dict.keys()):
@@ -55,6 +55,13 @@ class HungarianTracker():
                     iou = IoU(self.tracks_ids_dict[track_id]["bbox"], bbox_list[k])
                     cost_matrix[track_id][k] = 1 - iou
             
+            # if some bbox have intersection with one of tracks we consider that
+            # this bbox not belongs to new tracks
+            for col in cost_matrix[:, range(cost_matrix.shape[1])]:
+                if np.any(np.logical_or(col!= 1, col!= 0)):
+                    col[col==0] = 1
+
+            # hungarian algo
             original_cost_matrix = np.copy(cost_matrix)
             assignment = scipy.optimize.linear_sum_assignment(cost_matrix)
 
@@ -63,10 +70,11 @@ class HungarianTracker():
             for bbox_id in range(len(bbox_list)):
                 bbox = bbox_list[bbox_id]
                 track_id = list(assignment[1]).index(bbox_id)
+                # no intersection -> no track_id
                 if original_cost_matrix[track_id][bbox_id] > self.threshold:
                     result_list.append("?")
                 else:
                     result_list.append(track_id)
                     self.tracks_ids_dict[track_id]['bbox'] = bbox
-            print(original_cost_matrix)
+            print(result_list)
             return result_list
