@@ -1,5 +1,5 @@
 from fastapi import FastAPI, WebSocket
-from tracks.track_10_10_25 import track_data, country_balls_amount, track_name
+from tracks.track_5_10_50 import track_data, country_balls_amount, track_name
 import asyncio
 import glob
 import uvicorn
@@ -180,7 +180,14 @@ def tracker_strong(el):
             else:
                 strong_results[obj["cb_id"]].append("not_detected")
         # get tracks for detected bboxes
-        tracks = strong_tracker.update_tracks(bboxes, frame=curr_frame)
+        try:
+            tracks = strong_tracker.update_tracks(bboxes, frame=curr_frame)
+        except Exception:
+            print(curr_frame_id, curr_frame.shape)
+            for obj in data:
+                obj["track_id"] = "not_detected"
+            el["data"] = data
+            return el
 
         # assign track_id for every detected bbox
         used_track_ids = set()
