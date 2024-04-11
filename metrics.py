@@ -38,7 +38,7 @@ def MOTA(predicted_ids_dict: Dict):
         fn += predicted_ids_dict[cb_id].count("not_detected") # not detected
         idsw += num_id_switches(predicted_ids_dict[cb_id]) # times of track_id switches
         gt_count += len(predicted_ids_dict[cb_id])
-
+        
     return 1 - (fn + fp + idsw) / (gt_count)
 
 
