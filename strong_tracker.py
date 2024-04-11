@@ -15,7 +15,7 @@ def compare_boxes_with_embeds(detections, trackers, detections_embeds, trackers_
 
     for d,det in enumerate(detections):
         for t,trk in enumerate(trackers):
-            iou_matrix[d,t] = 1*IoU(det,trk) + 1*cosine_similarity([np.squeeze(detections_embeds[d])], [np.squeeze(trackers_embeds[t])])[0][0]
+            iou_matrix[d,t] = 0.8*IoU(det,trk) + 0.2*cosine_similarity([np.squeeze(detections_embeds[d])], [np.squeeze(trackers_embeds[t])])[0][0]
     
     # calculate maximum iou for each pair through hungarian algorithm
     row_id, col_id = linear_sum_assignment(-iou_matrix)
@@ -29,25 +29,25 @@ def compare_boxes_with_embeds(detections, trackers, detections_embeds, trackers_
 
     return best_indices,unmatched_detection_indices,unmatched_trackers_indices
 
-def transform_bbox(bbox):
-    x1, y1, x2, y2 = bbox
-    w = x2 - x1
-    h = y2 - y1
-    y1 += h
-    y2 += h
-    x1 += w/2
-    x2 += w/2
-    return [x1, y1, x2, y2]
+# def transform_bbox(bbox):
+#     x1, y1, x2, y2 = bbox
+#     w = x2 - x1
+#     h = y2 - y1
+#     y1 += h
+#     y2 += h
+#     x1 += w/2
+#     x2 += w/2
+#     return [x1, y1, x2, y2]
 
 def cut_preprocessed_bbox(frame, bbox, processing):
-    x1, y1, x2, y2 = transform_bbox(bbox)
     image_w, image_h = frame.shape[1], frame.shape[0]
+    x1, y1, x2, y2 = bbox
     cut = frame[max(int(y1), 0):min(int(y2), image_h), 
                 max(int(x1), 0):min(int(x2), image_w)]
     return processing(cut)[None, :, :, :]
 
 class StrongTracker(SORT):
-    def __init__(self, threshold=0.3, max_age=3) -> None:
+    def __init__(self, threshold=0.3, max_age=4) -> None:
         super().__init__(threshold, max_age)
         self.extractor = nn.Sequential(*list(mobilenet_v3_small(pretrained=True).children())[:-1])
         self.processing = transforms.Compose([
